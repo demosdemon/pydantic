@@ -10,14 +10,14 @@ class SimpleSettings(BaseSettings):
     apple: str = ...
 
 
-def test_sub_env(env):
-    env.set('APP_APPLE', 'hello')
+def test_sub_env(monkeypatch):
+    monkeypatch.setenv('APP_APPLE', 'hello')
     s = SimpleSettings()
     assert s.apple == 'hello'
 
 
-def test_sub_env_override(env):
-    env.set('APP_APPLE', 'hello')
+def test_sub_env_override(monkeypatch):
+    monkeypatch.setenv('APP_APPLE', 'hello')
     s = SimpleSettings(apple='goodbye')
     assert s.apple == 'goodbye'
 
@@ -30,19 +30,19 @@ def test_sub_env_missing():
     ]
 
 
-def test_other_setting(env):
+def test_other_setting():
     with pytest.raises(ValidationError):
         SimpleSettings(apple='a', foobar=42)
 
 
-def test_env_with_aliass(env):
+def test_env_with_alias(monkeypatch):
     class Settings(BaseSettings):
         apple: str = ...
 
         class Config:
             fields = {'apple': 'BOOM'}
 
-    env.set('BOOM', 'hello')
+    monkeypatch.setenv('BOOM', 'hello')
     assert Settings().apple == 'hello'
 
 
@@ -57,62 +57,62 @@ class ComplexSettings(BaseSettings):
     date: DateModel = DateModel()
 
 
-def test_list(env):
-    env.set('APP_APPLES', '["russet", "granny smith"]')
+def test_list(monkeypatch):
+    monkeypatch.setenv('APP_APPLES', '["russet", "granny smith"]')
     s = ComplexSettings()
     assert s.apples == ['russet', 'granny smith']
     assert s.date.pips is False
 
 
-def test_set_dict_model(env):
-    env.set('APP_BANANAS', '[1, 2, 3, 3]')
-    env.set('APP_CARROTS', '{"a": null, "b": 4}')
-    env.set('APP_DATE', '{"pips": true}')
+def test_set_dict_model(monkeypatch):
+    monkeypatch.setenv('APP_BANANAS', '[1, 2, 3, 3]')
+    monkeypatch.setenv('APP_CARROTS', '{"a": null, "b": 4}')
+    monkeypatch.setenv('APP_DATE', '{"pips": true}')
     s = ComplexSettings()
     assert s.bananas == {1, 2, 3}
     assert s.carrots == {'a': None, 'b': 4}
     assert s.date.pips is True
 
 
-def test_invalid_json(env):
-    env.set('APP_APPLES', '["russet", "granny smith",]')
+def test_invalid_json(monkeypatch):
+    monkeypatch.setenv('APP_APPLES', '["russet", "granny smith",]')
     with pytest.raises(SettingsError):
         ComplexSettings()
 
 
-def test_required_sub_model(env):
+def test_required_sub_model(monkeypatch):
     class Settings(BaseSettings):
         foobar: DateModel
 
     with pytest.raises(ValidationError):
         Settings()
-    env.set('APP_FOOBAR', '{"pips": "TRUE"}')
+    monkeypatch.setenv('APP_FOOBAR', '{"pips": "TRUE"}')
     s = Settings()
     assert s.foobar.pips is True
 
 
-def test_non_class(env):
+def test_non_class(monkeypatch):
     class Settings(BaseSettings):
         foobar: NoneStr
 
-    env.set('APP_FOOBAR', 'xxx')
+    monkeypatch.setenv('APP_FOOBAR', 'xxx')
     s = Settings()
     assert s.foobar == 'xxx'
 
 
-def test_alias_matches_name(env):
+def test_alias_matches_name(monkeypatch):
     class Settings(BaseSettings):
         foobar: str
 
         class Config:
             fields = {'foobar': 'foobar'}
 
-    env.set('foobar', 'xxx')
+    monkeypatch.setenv('foobar', 'xxx')
     s = Settings()
     assert s.foobar == 'xxx'
 
 
-def test_case_insensitive(env):
+def test_case_insensitive(monkeypatch):
     class Settings(BaseSettings):
         foo: str
         bAR: str
@@ -120,8 +120,8 @@ def test_case_insensitive(env):
         class Config:
             case_insensitive = True
 
-    env.set('apP_foO', 'foo')
-    env.set('app_bar', 'bar')
+    monkeypatch.setenv('apP_foO', 'foo')
+    monkeypatch.setenv('app_bar', 'bar')
     s = Settings()
     assert s.foo == 'foo'
     assert s.bAR == 'bar'
