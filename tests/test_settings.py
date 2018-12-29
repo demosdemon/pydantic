@@ -127,7 +127,7 @@ def test_case_insensitive(monkeypatch):
     assert s.bAR == 'bar'
 
 
-def test_nested_dataclass(env):
+def test_nested_dataclass(monkeypatch):
     @dataclasses.dataclass
     class MyDataclass:
         foo: int
@@ -136,14 +136,14 @@ def test_nested_dataclass(env):
     class Settings(BaseSettings):
         n: MyDataclass
 
-    env.set('APP_N', '[123, "bar value"]')
+    monkeypatch.setenv('APP_N', '[123, "bar value"]')
     s = Settings()
     assert isinstance(s.n, MyDataclass)
     assert s.n.foo == 123
     assert s.n.bar == 'bar value'
 
 
-def test_config_file_settings(env):
+def test_config_file_settings(monkeypatch):
     class Settings(BaseSettings):
         foo: int
         bar: str
@@ -151,14 +151,14 @@ def test_config_file_settings(env):
         def _build_values(self, init_kwargs):
             return {**init_kwargs, **self._build_environ()}
 
-    env.set('APP_BAR', 'env setting')
+    monkeypatch.setenv('APP_BAR', 'env setting')
 
     s = Settings(foo='123', bar='argument')
     assert s.foo == 123
     assert s.bar == 'env setting'
 
 
-def test_config_file_settings_nornir(env):
+def test_config_file_settings_nornir(monkeypatch):
     """
     See https://github.com/samuelcolvin/pydantic/pull/341#issuecomment-450378771
     """
@@ -172,7 +172,7 @@ def test_config_file_settings_nornir(env):
             config_settings = init_kwargs.pop('__config_settings__')
             return {**config_settings, **init_kwargs, **self._build_environ()}
 
-    env.set('APP_C', 'env setting c')
+    monkeypatch.setenv('APP_C', 'env setting c')
 
     config = {'a': 'config a', 'b': 'config b', 'c': 'config c'}
     s = Settings(__config_settings__=config, b='argument b', c='argument c')
