@@ -48,3 +48,30 @@ def test_py37_annotations(working_dir):
     assert module.BaseModel is pydantic.BaseModel
     assert issubclass(module.CustomValue, pydantic.BaseModel)
     assert issubclass(module.CustomMapping, pydantic.BaseModel)
+
+
+@pytest.mark.xfail(raises=RuntimeError, reason='Unsupported FutureRef')
+def test_future_ref(working_dir):
+    module = working_dir.inline_module(
+        """
+        from pydantic import BaseModel
+
+
+        class Model(BaseModel):
+            name: str = ...
+            value: 'Model' = None
+        """
+    )
+
+    assert module
+    assert module.BaseModel is pydantic.BaseModel
+    assert issubclass(module.Model, pydantic.BaseModel)
+
+    m = module.Model(name='test')
+    assert m.name == 'test'
+
+    v = module.Model(name='test2', value=m)
+    assert v.name == 'test2'
+    assert v.value is m
+
+    assert v.dict() == {'name': 'test2', 'value': {'name': 'test'}}
