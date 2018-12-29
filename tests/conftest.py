@@ -186,7 +186,7 @@ class WorkingDir:
     def inline_module(self, source):
         """Save the contents of `source` as a python module, immediately import it, and return it."""
         source = prepare_text(source)
-        fingerprint = hashlib.sha512(source).hexdigest()
+        fingerprint = hashlib.sha224(source).hexdigest()
         path = self.tmpdir.joinpath(fingerprint).with_suffix('.py')
         path.write_bytes(source)
         name = f'mem:{fingerprint}'
